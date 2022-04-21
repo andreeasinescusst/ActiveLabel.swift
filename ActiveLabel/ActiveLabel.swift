@@ -51,6 +51,12 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
     open var customSelectedColor: [ActiveType : UIColor] = [:] {
         didSet { updateTextStorage(parseText: false) }
     }
+    open var customAttributes: [ActiveType : [NSAttributedString.Key : Any]] = [:] {
+        didSet { updateTextStorage(parseText: false) }
+    }
+    open var customSelectedAttributes: [ActiveType : [NSAttributedString.Key : Any]] = [:] {
+        didSet { updateTextStorage(parseText: false) }
+    }
     @IBInspectable public var lineSpacing: CGFloat = 0 {
         didSet { updateTextStorage(parseText: false) }
     }
@@ -343,9 +349,19 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
                 attributes = configureLinkAttribute(type, attributes, false)
             }
             
+            let attributesBeforeCustomization = attributes
+            
+            if let customAttributes = customAttributes[type] {
+                customAttributes.forEach { (key, value) in
+                    attributes[key] = value
+                }
+            }
+            
             for element in elements {
                 mutAttrString.setAttributes(attributes, range: element.range)
             }
+            
+            attributes = attributesBeforeCustomization
         }
     }
     
@@ -418,6 +434,12 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
             case .email: selectedColor = URLSelectedColor ?? URLColor
             }
             attributes[NSAttributedString.Key.foregroundColor] = selectedColor
+            
+            if let customAttributes = customSelectedAttributes[selectedElement.type] ?? customAttributes[selectedElement.type] {
+                customAttributes.forEach { (key, value) in
+                    attributes[key] = value
+                }
+            }
         } else {
             let unselectedColor: UIColor
             switch type {
@@ -428,6 +450,12 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
             case .email: unselectedColor = URLColor
             }
             attributes[NSAttributedString.Key.foregroundColor] = unselectedColor
+            
+            if let customAttributes = customAttributes[selectedElement.type] {
+                customAttributes.forEach { (key, value) in
+                    attributes[key] = value
+                }
+            }
         }
         
         if let highlightFont = hightlightFont {
